@@ -87,19 +87,16 @@ public class HttpServer
                 BufferedReader reader = new BufferedReader(isr);
                 String line = reader.readLine();
 
+
                 String text = null;
                 String nomFichier = "web/index.html";
-                /**
-                 if (line.contains("GET")) {
-                 text = line.split(" ")[1];
 
-                 for (int i = 0; i < text.length() - 1; i++) {
-                 nomFichier += text.charAt(i + 1);
+
+                 if (line.contains("GET") && !line.equals("GET / HTTP/1.1")) {
+
+                     nomFichier =  "web/"+line.substring(5, line.length() - 9);
                  }
 
-                 System.out.println(text);
-                 }
-                 **/
                 if (!nomFichier.equals("favicon.ico")) {
                     System.out.println(nomFichier);
                     File f = new File(nomFichier);
