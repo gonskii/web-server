@@ -88,7 +88,7 @@ public class HttpServer
                 String line = reader.readLine();
 
                 String text = null;
-                String nomFichier = "web/miniWeb.html";
+                String nomFichier = "web/index.html";
                 /**
                  if (line.contains("GET")) {
                  text = line.split(" ")[1];
