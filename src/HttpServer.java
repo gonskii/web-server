@@ -91,14 +91,14 @@ public class HttpServer
                 String text = null;
                 String nomFichier = "web/index.html";
 
-
+                System.out.println(line);
                  if (line.contains("GET") && !line.equals("GET / HTTP/1.1")) {
 
                      nomFichier =  "web/"+line.substring(5, line.length() - 9);
                  }
 
-                if (!nomFichier.equals("favicon.ico")) {
-                    System.out.println(nomFichier);
+                if (!nomFichier.equals("web/favicon.ico")) {
+                    //System.out.println(nomFichier);
                     File f = new File(nomFichier);
                     byte[] b = null;
 

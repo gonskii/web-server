@@ -1,0 +1,6 @@
+<webconf>
+    <port>80</port>
+    <root>./web/</root>
+    <index>true</index>
+    <indexFile>index.html</indexFile>
+</webconf>
