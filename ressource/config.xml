@@ -1,6 +1,7 @@
 <webconf>
     <port></port>
     <root></root>
-    <index>true</index>
-    <indexFile>index.html</indexFile>
+    <indexFile></indexFile>
+    <index></index>
+    <reject></reject>
 </webconf>

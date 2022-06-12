@@ -11,73 +11,108 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class LectureXML
-{
+// rajouter arraylist pour PLUSIEUR IP REJETEE
+public class LectureXML {
     //attribut que l'on va récupérer dans le fichier XML
     private int port;
     private String root;
     private String indexFile;
     private boolean index;
-    private ArrayList<InetAddress> reject;
+    //pour l'instant une seule adresse ip que l'on peut rejeter.
+    private InetAddress reject;
 
-    public LectureXML(String nomFichier) throws ParserConfigurationException, SAXException{
-        /**this.port = 80;
-        this.root = "/";
-        this.index = false;
-        this.reject = null;*/
-            try
-            {
-                // On cree une instance de File qui prend en parametre le nom duf fichier de configuration XML
-                File file = new File(nomFichier);
+    public LectureXML(String nomFichier) throws ParserConfigurationException, SAXException {
+        try {
+            // On crée une instance de File qui prend en paramètre le nom duf fichier de configuration XML
+            File file = new File(nomFichier);
 
+            //On crée une instance de document à partir du document builder et du nom du fichier
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.parse(file);
 
-                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                DocumentBuilder db = dbf.newDocumentBuilder();
-                Document document = db.parse(file);
+            //on récupère les documents présents dans notre fichier XML
+            document.getDocumentElement().normalize();
 
-                document.getDocumentElement().normalize();
-
-                // on lit le contenu de la balise port
-                try {
-                    this.port = Integer.parseInt(document.getElementsByTagName("port").item(0).getTextContent());
-                }
-                // si elle est vide on instancie port a 80
-                catch (NumberFormatException e){
-                    this.port = 80;
-                }
-
-                // on lit le contenu de la balise <root>
-                this.root = document.getElementsByTagName("root").item(0).getTextContent();
-                // si elle est vide le root est le dossier web
-                if(this.root.equals("")) this.root = "web/";
-
+            // on lit le contenu de la balise port
+            try {
+                this.port = Integer.parseInt(document.getElementsByTagName("port").item(0).getTextContent());
             }
-            catch (IOException e)
-            {
+            // si elle est vide on instancie port a 80
+            catch (NumberFormatException e) {
+                this.port = 80;
+            }
+
+            // on lit le contenu de la balise <root>
+            this.root = document.getElementsByTagName("root").item(0).getTextContent();
+
+            // si elle est vide le root est le dossier web
+            if (this.root.equals("")) this.root = "web/";
+
+            //on lit l'index file
+            this.indexFile = document.getElementsByTagName("indexFile").item(0).getTextContent();
+
+            //s'il est vide :
+            if (this.indexFile.equals("")) this.indexFile = "index.html";
+
+            //on lit l'index (si rien n'est présent le met automatiquement à false) :
+            this.index = Boolean.parseBoolean(document.getElementsByTagName("index").item(0).getTextContent());
+
+            try {
+                this.reject = InetAddress.getByName(document.getElementsByTagName("reject").item(0).getTextContent());
+            } catch (NullPointerException e) {
                 e.printStackTrace();
             }
-    }
 
-    public int getPort(){
-        return this.port;
-    }
+            if (this.reject.equals(InetAddress.getByName("localhost"))) this.reject = null;
 
-
-    public String getRoot(){
-        return this.root;
-    }
-
-
-    public static void main(String[] args) {
-        try {
-            LectureXML lx = new LectureXML("ressource/config.xml");
-            System.out.println(lx.getPort());
-            System.out.println(lx.getRoot());
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        } catch (SAXException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-}
 
+    /**
+     * getter du port
+     *
+     * @return le port
+     */
+    public int getPort() {
+        return this.port;
+    }
+
+    /**
+     * getter du root
+     *
+     * @return le root
+     */
+    public String getRoot() {
+        return this.root;
+    }
+
+    /**
+     * getter du indexfile
+     *
+     * @return le indexfile
+     */
+    public String getIndexFile() {
+        return indexFile;
+    }
+
+    /**
+     * getter du index
+     *
+     * @return boolean
+     */
+    public boolean isIndex() {
+        return index;
+    }
+
+    /**
+     * getter des adresses rejetés
+     *
+     * @return les adresses rejetées.
+     */
+    public InetAddress getReject() {
+        return reject;
+    }
+}
