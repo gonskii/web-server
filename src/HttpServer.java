@@ -1,8 +1,12 @@
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -12,14 +16,15 @@ import java.util.Scanner;
 
 public class HttpServer
 {
-
+    /**
     private int port;
     private String rootDir;
+    private String indexFile;
     private boolean index;
     private ArrayList<InetAddress> accept;
     private ArrayList<InetAddress> reject;
-
-    public static void main(String[] args) throws IOException {
+    */
+    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
         int port = args.length == 1 ? Integer.parseInt(args[0]) : 80;
 
         Scanner sc = new Scanner(System.in);
@@ -37,7 +42,7 @@ public class HttpServer
                 envoyerReponse(port);
                 break;
             case 3:
-                requeteHtml(port);
+                requeteHtml("ressource/config.xml");
                 break;
             default:
                 System.out.println("pas un choix disponible");
@@ -78,28 +83,72 @@ public class HttpServer
 
     }
 
-    private static void requeteHtml(int port) throws IOException {
-        final ServerSocket server = new ServerSocket(port);
-        System.out.println("Listening for connection on port " + port + " ....");
-        while (true) {
-            try (Socket socket = server.accept()) {
-                InputStreamReader isr = new InputStreamReader(socket.getInputStream());
-                BufferedReader reader = new BufferedReader(isr);
-                String line = reader.readLine();
+    private static void requeteHtml(String nomfichier) throws IOException, ParserConfigurationException, SAXException {
+        //On crée une instance de lecture XML qui va lire le fichier XML:
+        LectureXML lectureXml = new LectureXML(nomfichier);
+        //paramétrage du port par rapport au fichier xml:
+        final ServerSocket server = new ServerSocket(lectureXml.getPort());
+        System.out.println("Lecture de la connection au port: " + lectureXml.getPort() + " ....");
+
+        //On récupére l'adresse ip machine de la personne qui se connecte:
+        InetAddress adresse =  InetAddress.getLocalHost();
+        //on récupere le masque:
+        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(adresse);
+        int masque = networkInterface.getInterfaceAddresses().get(0).getNetworkPrefixLength();
+        //on récupère l'adresse reseau de la personne:
+        InetAddress adresseReseau = ipReseau(adresse.getHostAddress(), masque);
+        //On récupe l'adresse ip a rejetée:
+        InetAddress rejectedAdresse = lectureXml.getReject();
+        // 192.168.56.0 : ip reseau anas.
+        if(!adresseReseau.getHostAddress().equals(rejectedAdresse.getHostAddress()))
+        {
+            while (true) {
+                //si le server se connecte au socket alors :
+                try (Socket socket = server.accept()) {
+
+                    //on lit ce que la requete du server:
+                    InputStreamReader isr = new InputStreamReader(socket.getInputStream());
+                    BufferedReader reader = new BufferedReader(isr);
+                    String line = reader.readLine();
+
+                    //on paramètre le fichier de base par rapport au fichier xml :
+                    String nomFichier = lectureXml.getRoot()+lectureXml.getIndexFile();
+
+                    //on lit la requête:
+                    System.out.println(line);
+                    if (line.contains("GET") && !line.equals("GET / HTTP/1.1")) {
+                        //on paramètre par rapport au root lu dans le fichier XML:
+                        nomFichier =  lectureXml.getRoot()+line.substring(5, line.length() - 9);
+                    }
 
 
-                String text = null;
-                String nomFichier = "web/index.html";
+                    if (!nomFichier.equals("web/favicon.ico")) {
+                        //System.out.println(nomFichier);
+                        File f = new File(nomFichier);
+                        //on vérifie si le nom du fichier n'existe pas
+                        if(!f.exists())
+                        {
+                            //si il n'existe pas on ouvre une page d'erreur
+                            f = new File("web/error/error.html");
+                        }
 
-                System.out.println(line);
-                 if (line.contains("GET") && !line.equals("GET / HTTP/1.1")) {
+                        byte[] b = null;
 
-                     nomFichier =  "web/"+line.substring(5, line.length() - 9);
-                 }
+                        b = Files.readAllBytes(f.toPath());
 
-                if (!nomFichier.equals("web/favicon.ico")) {
-                    //System.out.println(nomFichier);
-                    File f = new File(nomFichier);
+                        String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
+                        socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
+                        socket.getOutputStream().write(b);
+                    }
+                }
+            }
+        }
+        else
+        {
+            while(true)
+            {
+                try(Socket socket = server.accept()) {
+                    File f = new File("web/error/error502.html");
                     byte[] b = null;
 
                     b = Files.readAllBytes(f.toPath());
@@ -109,10 +158,74 @@ public class HttpServer
                     socket.getOutputStream().write(b);
                 }
             }
+
         }
+
+
 
     }
 
+    /**
+     * méthode qui permet de transformer une adresse ip machine en adresse ip réseau
+     * @param ip l'adresse ip machine
+     * @param prefmasque le masque
+     * @return ip reseau
+     */
+    public static InetAddress ipReseau(String ip, int prefmasque)
+    {
+        //pour savoir le masque :
+        //System.out.println("le masque : " + prefmasque);
+        //convertir le masque entier en un tableau de 32bits
+        int masque = 0xffffffff << (32 - prefmasque);
+        int valeur = masque;
+        byte[] bytes_masque = new byte[]{
+                (byte)(valeur >>> 24), (byte)(valeur >> 16 & 0xff), (byte)(valeur >> 8 & 0xff), (byte)(valeur & 0xff) };
 
+        try
+        {
+            //Convertir l'adresse IP en long
+            long ipl = ipToLong(ip);
 
+            //Convertir l'IP en un tableau de 32bits
+            byte[] bytes_ip = new byte[]{
+                    (byte) ((ipl >> 24) & 0xFF),
+                    (byte) ((ipl >> 16) & 0xFF),
+                    (byte) ((ipl >> 8 ) & 0xFF),
+                    (byte) (ipl & 0xFF)};
+
+            //Le ET logique entre l'adresse IP et le masque
+            byte[] bytes_reseau = new byte[]{
+                    (byte) (bytes_ip[0] & bytes_masque[0]),
+                    (byte) (bytes_ip[1] & bytes_masque[1]),
+                    (byte) (bytes_ip[2] & bytes_masque[2]),
+                    (byte) (bytes_ip[3] & bytes_masque[3]),
+            };
+            //adresse réseau obtenue
+            InetAddress adr_reseau = InetAddress.getByAddress(bytes_reseau);
+            //pour savoir l'adresse reseau:
+            //System.out.println("Adresse réseau =\t"+adr_reseau.getHostAddress());
+            return adr_reseau;
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * méthode qui transforme une ip en un long
+     * @param ipAddress ip a transformé
+     * @return retourne le long
+     */
+    public static long ipToLong(String ipAddress) {
+        long result = 0;
+        String[] ipAddressInArray = ipAddress.split("\\.");
+
+        for (int i = 3; i >= 0; i--) {
+            long ip = Long.parseLong(ipAddressInArray[3 - i]);
+            result |= ip << (i * 8);
+        }
+        return result;
+    }
 }

@@ -1,6 +1,7 @@
 <webconf>
-    <port></port>
+    <port>500</port>
     <root></root>
-    <index>true</index>
-    <indexFile>index.html</indexFile>
+    <indexFile>miniWeb.html</indexFile>
+    <index></index>
+    <reject>192.168.56.0</reject>
 </webconf>

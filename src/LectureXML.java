@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-// rajouter arraylist pour PLUSIEUR IP REJETEE
+// rajouter arraylist pour PLUSIEURS IP REJETÉE
 public class LectureXML {
     //attribut que l'on va récupérer dans le fichier XML
     private int port;
@@ -64,7 +64,7 @@ public class LectureXML {
                 e.printStackTrace();
             }
 
-            if (this.reject.equals(InetAddress.getByName("localhost"))) this.reject = null;
+
 
         } catch (IOException e) {
             e.printStackTrace();
