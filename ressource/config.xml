@@ -1,8 +1,8 @@
 <webconf>
-    <port>900</port>!-- port à entrer.
+    <port></port>!-- port à entrer.
     <root></root>!--Chemin relatif.
     <indexFile></indexFile> !-index-file.
-    <index>true</index> !--boolean
-    <reject>127.0.0.1</reject> !-- ip réseau obligatoire format d'ip : 192.168.56.0.
-    <reject>192.168.56.0</reject> !-- ip réseau obligatoire format d'ip : 192.168.56.0.
+    <index></index> !--boolean
+    <reject></reject> !-- ip réseau obligatoire format d'ip : 192.168.56.0.
+    <reject></reject> !-- peut y en avoir plusieurs
 </webconf>

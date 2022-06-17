@@ -87,25 +87,24 @@ public class HttpServer
         final ServerSocket server = new ServerSocket(lectureXml.getPort());
         System.out.println("Lecture de la connection au port: " + lectureXml.getPort() + " ....");
 
-        //On récupére l'adresse ip machine de la personne qui se connecte:
-
-        InetAddress adresse =  InetAddress.getLocalHost();
-        //on récupere le masque:
-        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(adresse);
-        int masque = networkInterface.getInterfaceAddresses().get(0).getNetworkPrefixLength();
-        //on récupère l'adresse reseau de la personne:
-        InetAddress adresseReseau = ipReseau(adresse.getHostAddress(), masque);
-        //On récupe l'adresse ip a rejetée:
-        ArrayList<InetAddress> rejectedAdresse = (ArrayList<InetAddress>) lectureXml.getReject();
-        //192.168.56.0: ip reseau anas.
-        //on vérifie que l'adresse ip n'est pas l'adresse qu'on rejette:
-
 
         while (true) {
             try (Socket socket = server.accept()) {
+                // C'EST ICI QUE CA TE TEST:
+                //On récupére l'adresse ip machine de la personne qui se connecte:
+                InetAddress adresse =  socket.getInetAddress();
+                //on récupere le masque:
+                NetworkInterface networkInterface = NetworkInterface.getByInetAddress(adresse);
+                int masque = networkInterface.getInterfaceAddresses().get(0).getNetworkPrefixLength();
+                //on récupère l'adresse reseau de la personne:
+                InetAddress adresseReseau = ipReseau(adresse.getHostAddress(), masque);
+                //On récupe l'adresse ip a rejetée:
+                ArrayList<InetAddress> rejectedAdresse = (ArrayList<InetAddress>) lectureXml.getReject();
+                //192.168.56.0: ip reseau anas.
+                //on vérifie que l'adresse ip n'est pas l'adresse qu'on rejette:
+
                 if(!rejectedAdresse.contains(adresseReseau))
                 {
-                    //System.out.println(socket.getInetAddress());
                     //on lit ce que la requete du server:
                     InputStreamReader isr = new InputStreamReader(socket.getInputStream());
                     BufferedReader reader = new BufferedReader(isr);
@@ -250,18 +249,17 @@ public class HttpServer
     *
     */
     public static String afficherArborescence(File chemin, String xmlfichier) throws ParserConfigurationException, SAXException {
-
+//
         LectureXML lectureXML = new LectureXML(xmlfichier);
         String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
-        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\"><img src=\"images/dossier.png\" width=\"20\">..</a></li><br>\n");
+        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\">..</a></li><br>\n");
 
 
         if(lectureXML.getRoot().equals(chemin.getPath()+"/")) arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"\\</h1>\n<ul><br>\n");
         File[] files = chemin.listFiles();
         for(File file : files){
             String path = file.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"");
-            if(file.isDirectory()) arborescence.append("<li><a href=\""+path+"\"><img src=\"images/dossier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
-            else arborescence.append("<li><a href=\""+path+"\"><img src=\"images/fichier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
+            arborescence.append("<li><a href=\""+path+"\">"+file.getName()+"</a></li><br>\n");
         }
         arborescence.append("</ul>\n</body>\n</html>");
         return arborescence.toString();
