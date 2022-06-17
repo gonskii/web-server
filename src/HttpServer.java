@@ -5,10 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
@@ -87,10 +84,11 @@ public class HttpServer
         //On crée une instance de lecture XML qui va lire le fichier XML:
         LectureXML lectureXml = new LectureXML(nomfichier);
         //paramétrage du port par rapport au fichier xml:
-        final ServerSocket server = new ServerSocket(lectureXml.getPort());
+        final ServerSocket server = new ServerSocket(lectureXml.getPort(), 5,  InetAddress.getByName("0.0.0.0"));
         System.out.println("Lecture de la connection au port: " + lectureXml.getPort() + " ....");
 
         //On récupére l'adresse ip machine de la personne qui se connecte:
+
         InetAddress adresse =  InetAddress.getLocalHost();
         //on récupere le masque:
         NetworkInterface networkInterface = NetworkInterface.getByInetAddress(adresse);
@@ -99,20 +97,23 @@ public class HttpServer
         InetAddress adresseReseau = ipReseau(adresse.getHostAddress(), masque);
         //On récupe l'adresse ip a rejetée:
         InetAddress rejectedAdresse = lectureXml.getReject();
-        // 192.168.56.0 : ip reseau anas.
-        if(!adresseReseau.getHostAddress().equals(rejectedAdresse.getHostAddress()))
-        {
-            while (true) {
-                //si le server se connecte au socket alors :
-                try (Socket socket = server.accept()) {
+        //192.168.56.0: ip reseau anas.
+        //on vérifie que l'adresse ip n'est pas l'adresse qu'on rejette:
 
+
+        while (true) {
+            try (Socket socket = server.accept()) {
+                if(!adresseReseau.getHostAddress().equals(rejectedAdresse.getHostAddress()))
+                {
+
+                    System.out.println(socket.getInetAddress());
                     //on lit ce que la requete du server:
                     InputStreamReader isr = new InputStreamReader(socket.getInputStream());
                     BufferedReader reader = new BufferedReader(isr);
                     String line = reader.readLine();
 
                     //on paramètre le fichier de base par rapport au fichier xml :
-                    String configXml = lectureXml.getRoot()+lectureXml.getIndexFile();
+                    String configXml = lectureXml.getRoot()/*+lectureXml.getIndexFile()*/;
 
                     //on lit la requête:
                     System.out.println(line);
@@ -131,13 +132,21 @@ public class HttpServer
                             //si il n'existe pas on ouvre une page d'erreur
                             f = new File("web/error/error.html");
                         }
-                        if(f.isDirectory()){
+                        //on vérifie si le fichier est un repertoire et que l'index est true:
+                        if(f.isDirectory() && lectureXml.isIndex()){
                             String affichage = afficherArborescence(f,nomfichier);
                             String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
                             socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
                             socket.getOutputStream().write(affichage.getBytes("UTF-8"));
                         }
+                        //sinon on vérifie que le fichier est un répertoire:
                         else{
+                            if(f.isDirectory() && !lectureXml.isIndex())
+                            {
+
+                                f = new File("web/error/error502.html");
+                            }
+
                             byte[] b = null;
 
                             b = Files.readAllBytes(f.toPath());
@@ -147,14 +156,12 @@ public class HttpServer
                             socket.getOutputStream().write(b);
                         }
                     }
+
                 }
-            }
-        }
-        else
-        {
-            while(true)
-            {
-                try(Socket socket = server.accept()) {
+                //si c'est l'adresse que l'on rejette:
+                else
+                {
+
                     File f = new File("web/error/error502.html");
                     byte[] b = null;
 
@@ -163,14 +170,16 @@ public class HttpServer
                     String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
                     socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
                     socket.getOutputStream().write(b);
+
+
+
                 }
             }
-
+        }
         }
 
 
 
-    }
 
     /**
      * méthode qui permet de transformer une adresse ip machine en adresse ip réseau
@@ -242,9 +251,13 @@ public class HttpServer
     *
     */
     public static String afficherArborescence(File chemin, String xmlfichier) throws ParserConfigurationException, SAXException {
+//
         LectureXML lectureXML = new LectureXML(xmlfichier);
         String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
         StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\">..</a></li><br>\n");
+
+
+        if(lectureXML.getRoot().equals(chemin.getPath()+"/")) arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"\\</h1>\n<ul><br>\n");
         File[] files = chemin.listFiles();
         for(File file : files){
             String path = file.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"");
