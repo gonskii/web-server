@@ -112,33 +112,40 @@ public class HttpServer
                     String line = reader.readLine();
 
                     //on paramètre le fichier de base par rapport au fichier xml :
-                    String nomFichier = lectureXml.getRoot()+lectureXml.getIndexFile();
+                    String configXml = lectureXml.getRoot()+lectureXml.getIndexFile();
 
                     //on lit la requête:
                     System.out.println(line);
                     if (line.contains("GET") && !line.equals("GET / HTTP/1.1")) {
                         //on paramètre par rapport au root lu dans le fichier XML:
-                        nomFichier =  lectureXml.getRoot()+line.substring(5, line.length() - 9);
+                        configXml =  lectureXml.getRoot()+line.substring(5, line.length() - 9);
                     }
 
 
-                    if (!nomFichier.equals("web/favicon.ico")) {
+                    if (!configXml.equals("web/favicon.ico")) {
                         //System.out.println(nomFichier);
-                        File f = new File(nomFichier);
+                        File f = new File(configXml);
                         //on vérifie si le nom du fichier n'existe pas
                         if(!f.exists())
                         {
                             //si il n'existe pas on ouvre une page d'erreur
                             f = new File("web/error/error.html");
                         }
+                        if(f.isDirectory()){
+                            String affichage = afficherArborescence(f,nomfichier);
+                            String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
+                            socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
+                            socket.getOutputStream().write(affichage.getBytes("UTF-8"));
+                        }
+                        else{
+                            byte[] b = null;
 
-                        byte[] b = null;
+                            b = Files.readAllBytes(f.toPath());
 
-                        b = Files.readAllBytes(f.toPath());
-
-                        String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
-                        socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
-                        socket.getOutputStream().write(b);
+                            String httpResponse = "HTTP/1.1 200 OK\r\n\r\n";
+                            socket.getOutputStream().write(httpResponse.getBytes("UTF-8"));
+                            socket.getOutputStream().write(b);
+                        }
                     }
                 }
             }
@@ -228,4 +235,23 @@ public class HttpServer
         }
         return result;
     }
+
+    /**
+    * methode afficherArborescence qui affiche l'arborescence a partir du dossier courant de la requete
+    * @param chemin
+    *
+    */
+    public static String afficherArborescence(File chemin, String xmlfichier) throws ParserConfigurationException, SAXException {
+        LectureXML lectureXML = new LectureXML(xmlfichier);
+        String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
+        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\">..</a></li><br>\n");
+        File[] files = chemin.listFiles();
+        for(File file : files){
+            String path = file.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"");
+            arborescence.append("<li><a href=\""+path+"\">"+file.getName()+"</a></li><br>\n");
+        }
+        arborescence.append("</ul>\n</body>\n</html>");
+        return arborescence.toString();
+    }
+
 }

@@ -1,7 +1,7 @@
 <webconf>
-    <port></port>
+    <port>900</port>
     <root></root>
     <indexFile></indexFile>
     <index></index>
-    <reject></reject>
+    <reject></reject> !-- ip réseau obligatoire.
 </webconf>
