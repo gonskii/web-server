@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.List;
 
 // rajouter arraylist pour PLUSIEURS IP REJETÉE
 public class LectureXML {
@@ -19,7 +20,7 @@ public class LectureXML {
     private String indexFile;
     private boolean index;
     //pour l'instant une seule adresse ip que l'on peut rejeter.
-    private InetAddress reject;
+    private List<InetAddress> reject;
 
     public LectureXML(String nomFichier) throws ParserConfigurationException, SAXException {
         try {
@@ -59,7 +60,12 @@ public class LectureXML {
             this.index = Boolean.parseBoolean(document.getElementsByTagName("index").item(0).getTextContent());
 
             try {
-                this.reject = InetAddress.getByName(document.getElementsByTagName("reject").item(0).getTextContent());
+                NodeList node = document.getElementsByTagName("reject");
+                this.reject = new ArrayList<>(node.getLength());
+                for(int i = 0; i<node.getLength(); i++)
+                {
+                    this.reject.add(i,InetAddress.getByName(node.item(i).getTextContent()));
+                }
             } catch (NullPointerException e) {
                 e.printStackTrace();
             }
@@ -108,11 +114,11 @@ public class LectureXML {
     }
 
     /**
-     * getter des adresses rejetés
-     *
-     * @return les adresses rejetées.
+     * Getter de l'arrayList
+     * @return
      */
-    public InetAddress getReject() {
+    public List<InetAddress> getReject()
+    {
         return reject;
     }
 }

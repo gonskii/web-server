@@ -84,7 +84,7 @@ public class HttpServer
         //On crée une instance de lecture XML qui va lire le fichier XML:
         LectureXML lectureXml = new LectureXML(nomfichier);
         //paramétrage du port par rapport au fichier xml:
-        final ServerSocket server = new ServerSocket(lectureXml.getPort(), 5,  InetAddress.getByName("0.0.0.0"));
+        final ServerSocket server = new ServerSocket(lectureXml.getPort());
         System.out.println("Lecture de la connection au port: " + lectureXml.getPort() + " ....");
 
         //On récupére l'adresse ip machine de la personne qui se connecte:
@@ -96,17 +96,13 @@ public class HttpServer
         //on récupère l'adresse reseau de la personne:
         InetAddress adresseReseau = ipReseau(adresse.getHostAddress(), masque);
         //On récupe l'adresse ip a rejetée:
-        InetAddress rejectedAdresse = lectureXml.getReject();
+        ArrayList<InetAddress> rejectedAdresse = (ArrayList<InetAddress>) lectureXml.getReject();
         //192.168.56.0: ip reseau anas.
         //on vérifie que l'adresse ip n'est pas l'adresse qu'on rejette:
-
-
         while (true) {
             try (Socket socket = server.accept()) {
-                if(!adresseReseau.getHostAddress().equals(rejectedAdresse.getHostAddress()))
+                if(!rejectedAdresse.contains(adresseReseau))
                 {
-
-                    System.out.println(socket.getInetAddress());
                     //on lit ce que la requete du server:
                     InputStreamReader isr = new InputStreamReader(socket.getInputStream());
                     BufferedReader reader = new BufferedReader(isr);
