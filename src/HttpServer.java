@@ -81,10 +81,14 @@ public class HttpServer
     }
 
     private static void requeteHtml(String nomfichier) throws IOException, ParserConfigurationException, SAXException {
+        //System.setProperty("java.net.preferIPv6Addresses","false");
+        //System.setProperty("java.net.preferIPv4Stack","true");
+        //System.out.println(System.getProperty("java.net.preferIPv6Addresses"));
+
         //On crée une instance de lecture XML qui va lire le fichier XML:
         LectureXML lectureXml = new LectureXML(nomfichier);
         //paramétrage du port par rapport au fichier xml:
-        final ServerSocket server = new ServerSocket(lectureXml.getPort(), 5,  InetAddress.getByName("0.0.0.0"));
+        final ServerSocket server = new ServerSocket(lectureXml.getPort());
         System.out.println("Lecture de la connection au port: " + lectureXml.getPort() + " ....");
 
         //On récupére l'adresse ip machine de la personne qui se connecte:
@@ -105,8 +109,7 @@ public class HttpServer
             try (Socket socket = server.accept()) {
                 if(!adresseReseau.getHostAddress().equals(rejectedAdresse.getHostAddress()))
                 {
-
-                    System.out.println(socket.getInetAddress());
+                    //System.out.println(socket.getInetAddress());
                     //on lit ce que la requete du server:
                     InputStreamReader isr = new InputStreamReader(socket.getInputStream());
                     BufferedReader reader = new BufferedReader(isr);
@@ -254,14 +257,15 @@ public class HttpServer
 //
         LectureXML lectureXML = new LectureXML(xmlfichier);
         String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
-        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\">..</a></li><br>\n");
+        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\"><img src=\"images/dossier.png\" width=\"20\">..</a></li><br>\n");
 
 
         if(lectureXML.getRoot().equals(chemin.getPath()+"/")) arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"\\</h1>\n<ul><br>\n");
         File[] files = chemin.listFiles();
         for(File file : files){
             String path = file.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"");
-            arborescence.append("<li><a href=\""+path+"\">"+file.getName()+"</a></li><br>\n");
+            if(file.isDirectory()) arborescence.append("<li><a href=\""+path+"\"><img src=\"images/dossier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
+            else arborescence.append("<li><a href=\""+path+"\"><img src=\"images/fichier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
         }
         arborescence.append("</ul>\n</body>\n</html>");
         return arborescence.toString();
