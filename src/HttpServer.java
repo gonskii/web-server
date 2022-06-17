@@ -250,7 +250,7 @@ public class HttpServer
     *
     */
     public static String afficherArborescence(File chemin, String xmlfichier) throws ParserConfigurationException, SAXException {
-//
+
         LectureXML lectureXML = new LectureXML(xmlfichier);
         String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
         StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\"><img src=\"images/dossier.png\" width=\"20\">..</a></li><br>\n");
