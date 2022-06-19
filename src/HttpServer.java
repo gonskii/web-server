@@ -245,21 +245,22 @@ public class HttpServer
 
     /**
     * methode afficherArborescence qui affiche l'arborescence a partir du dossier courant de la requete
-    * @param chemin
-    *
+    * @param chemin Chemin du dossier dont on veut afficher l'arborescence
+    * @return une String contenant le code HTML de la page d'arborescence
     */
     public static String afficherArborescence(File chemin, String xmlfichier) throws ParserConfigurationException, SAXException {
-//
+
         LectureXML lectureXML = new LectureXML(xmlfichier);
         String repertoireSup = chemin.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"")+"\\..";
-        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\">..</a></li><br>\n");
+        StringBuilder arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"</h1>\n<ul>\n<li><a href=\""+repertoireSup+"\"><img src=\"images/dossier.png\" width=\"20\">..</a></li><br>\n");
 
 
         if(lectureXML.getRoot().equals(chemin.getPath()+"/")) arborescence = new StringBuilder("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n</head>\n<body>\n<h1>Arborescence de "+chemin.getPath()+"\\</h1>\n<ul><br>\n");
         File[] files = chemin.listFiles();
         for(File file : files){
             String path = file.getPath().replaceFirst(lectureXML.getRoot().substring(0, lectureXML.getRoot().length()-1),"");
-            arborescence.append("<li><a href=\""+path+"\">"+file.getName()+"</a></li><br>\n");
+            if(file.isDirectory()) arborescence.append("<li><a href=\""+path+"\"><img src=\"images/dossier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
+            else arborescence.append("<li><a href=\""+path+"\"><img src=\"images/fichier.png\" width=\"20\">"+file.getName()+"</a></li><br>\n");
         }
         arborescence.append("</ul>\n</body>\n</html>");
         return arborescence.toString();
